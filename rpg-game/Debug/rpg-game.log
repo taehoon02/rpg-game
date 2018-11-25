@@ -1,0 +1,7 @@
+﻿  main.c
+d:\rpg-game\rpg-game\main.c(167): warning C4244: '함수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\rpg-game\rpg-game\main.c(490): warning C4244: '함수': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\rpg-game\rpg-game\main.c(494): warning C4244: '함수': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\rpg-game\rpg-game\main.c(505): warning C4244: '함수': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\rpg-game\rpg-game\main.c(516): warning C4244: '함수': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  rpg-game.vcxproj -> D:\rpg-game\Debug\rpg-game.exe
