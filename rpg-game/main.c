@@ -51,6 +51,70 @@ int map[20][44] = {
 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
 };
 
+
+// #################################################################
+// #####################        GDI        #########################
+// #################################################################
+HWND getConsoleWindowHandle() {
+	WCHAR title[2048] = { 0 };
+	GetConsoleTitle(title, 2048);
+	HWND hWnd = FindWindow(NULL, title);
+	SetConsoleTitle(title);
+	return hWnd;
+}
+
+int GetDPI(HWND hWnd) {
+	HANDLE user32 = GetModuleHandle(TEXT("user32"));
+	FARPROC func = GetProcAddress(user32, "GetDpiForWindow");
+	if (func == NULL)
+		return 96;
+	return ((UINT(__stdcall *)(HWND))func)(hWnd);
+}
+
+void GetBMP(HDC hdc, HDC memdc, HBITMAP image) {
+	BITMAP bitmap;
+	HDC bitmapDC = CreateCompatibleDC(hdc);
+
+	GetObject(image, sizeof(bitmap), &bitmap);
+	SelectObject(bitmapDC, image);
+	BitBlt(memdc, 0, 0, bitmap.bmWidth, bitmap.bmHeight, bitmapDC, 0, 0, SRCCOPY);
+
+	DeleteDC(bitmapDC);
+}
+
+void paint(HWND hWnd, int dpi, HBITMAP image, int whatImageNum) {
+	HDC hdc = GetDC(hWnd);
+	HDC memdc = CreateCompatibleDC(hdc);
+
+	// 이미지정보를 넣기 위한 공간을 640*480으로 만듬.
+	HBITMAP bitmap = CreateCompatibleBitmap(hdc, 640, 480);
+
+	// 해당 이미지 정보와 메모리 공간을 연결
+	SelectObject(memdc, bitmap);
+
+	// image를 memdc에 담아오도록 함.
+	GetBMP(hdc, memdc, image);
+
+	// 콘솔창에 memdc에 들어 있는 이미지를 그려줌
+	if (whatImageNum == 1) { // zombie
+		StretchBlt(hdc, 110, 80, 303, 354, memdc, 0, 0, 303, 354, SRCCOPY);
+	}
+	else if (whatImageNum == 2) { // spider
+		StretchBlt(hdc, 60, 120, 449, 202, memdc, 0, 0, 449, 202, SRCCOPY);
+	}
+	else if (whatImageNum == 3) { // skeleton
+		StretchBlt(hdc, 140, 65, 206, 396, memdc, 0, 0, 206, 396, SRCCOPY);
+	}
+
+	DeleteDC(memdc);
+	DeleteObject(bitmap);
+	ReleaseDC(hWnd, hdc);
+}
+
+
+// #################################################
+
+
 // x, y로 이동하는 함수
 void gotoxy(int x, int y) {
 	COORD Cursor;
@@ -140,9 +204,9 @@ void clearMap() {
 	int iIndexX = 0, iIndexY = 0;
 
 	// 맵 지우기
-	for (iIndexY = 0; iIndexY < 20; iIndexY++) {
-		gotoxy(6, 6 + iIndexY);
-		for (iIndexX = 0; iIndexX < 44; iIndexX++) {
+	for (iIndexY = 0; iIndexY < 25; iIndexY++) {
+		gotoxy(6, 4 + iIndexY);
+		for (iIndexX = 0; iIndexX < 60; iIndexX++) {
 			printf(" ");
 		}
 		printf("\n");
@@ -230,6 +294,17 @@ void title() {
 }
 
 int main() {
+	// gdi 사용 목적 변수
+	char filename[100];
+	int dpi;
+	HBITMAP bitmap;
+
+	// 콘솔창의 핸들을 가져옴
+	HWND hWnd = getConsoleWindowHandle();
+
+	dpi = GetDPI(hWnd); // 콘솔창의 해상도 정보를 가져옴
+
+
 	// 금화개수
 	int iCoin = 0;
 
@@ -397,13 +472,13 @@ int main() {
 							}
 						}
 
+						int iRandomCoin = 0;
+						iRandomCoin = RPGRandom(10);
+
 						if (iMenu == 0) { // 이동
 							int iRandomMove = 0;
 							// return값이 0~9인 랜덤 함수
 							iRandomMove = RPGRandom(10);
-
-							int iRandomCoin = 0;
-							iRandomCoin = RPGRandom(10);
 
 							if (iRandomMove < 3) { // 이벤트 발생
 								// 금화 합계
@@ -436,8 +511,15 @@ int main() {
 									printf("좀비를 만났습니다!");
 
 									clearMap();
-									gotoxy(30, 15);
-									printf("좀비와 전투 시작");
+									// gotoxy(30, 15);
+									// printf("좀비와 전투 시작");
+
+									// 가져올 파일 이름을 지정하여 이미지 파일 정보를 가져옴
+									sprintf(filename, "zombie.bmp");
+									bitmap = (HBITMAP)LoadImage(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION | LR_DEFAULTSIZE);
+
+									paint(hWnd, dpi, bitmap, 1); // 콘솔창의 해상도에 맞게 이미지를 그려줌
+
 								}
 								else if (iRandomMob == 1) {
 									mob = spider;
@@ -446,8 +528,14 @@ int main() {
 									printf("스파이더를 만났습니다!");
 
 									clearMap();
-									gotoxy(30, 15);
-									printf("스파이더와 전투 시작");
+									// gotoxy(30, 15);
+									// printf("스파이더와 전투 시작");
+
+									// 가져올 파일 이름을 지정하여 이미지 파일 정보를 가져옴
+									sprintf(filename, "spider.bmp");
+									bitmap = (HBITMAP)LoadImage(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION | LR_DEFAULTSIZE);
+
+									paint(hWnd, dpi, bitmap, 2); // 콘솔창의 해상도에 맞게 이미지를 그려줌
 								}
 								else {
 									mob = skeleton;
@@ -456,8 +544,14 @@ int main() {
 									printf("스켈레톤을 만났습니다!");
 
 									clearMap();
-									gotoxy(30, 15);
-									printf("스켈레톤과 전투 시작");
+									// gotoxy(30, 15);
+									// printf("스켈레톤과 전투 시작");
+
+									// 가져올 파일 이름을 지정하여 이미지 파일 정보를 가져옴
+									sprintf(filename, "skeleton.bmp");
+									bitmap = (HBITMAP)LoadImage(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION | LR_DEFAULTSIZE);
+
+									paint(hWnd, dpi, bitmap, 3); // 콘솔창의 해상도에 맞게 이미지를 그려줌
 								}
 
 								while (1) { // 전투 시작
@@ -548,8 +642,7 @@ int main() {
 									}
 									// 주인공의 피가 없으면 게임 오버
 									if (iHeroHp <= 0) {
-										clearTextbox();
-										clearTitle();
+										clearMap();
 										gotoxy(30, 15);
 										printf("게임 오버");
 										gotoxy(30, 16);
